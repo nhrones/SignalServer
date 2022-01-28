@@ -1,0 +1,49 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Deno Run Socket Server",
+            "type": "shell",
+            "command": "deno",
+            "options": {
+                "cwd": "./"
+            },
+            "args": [
+                "run",
+                "--watch",
+                "--unstable",
+                "--allow-env", 
+                "--allow-net", 
+                "${workspaceFolder}/server.ts"
+            ],
+            "windows": {
+                "options": {
+                    "cwd": "./"
+                },
+                "command": "deno",
+                "args": [
+                    "run",
+                    "--watch",
+                    "--unstable",
+                    "--allow-env",
+                    "--allow-net",  
+                    "${workspaceFolder}\\server.ts"
+                ]
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always",
+                "focus": true,
+                "panel": "new",
+                "clear": true,
+                "showReuseMessage": false
+            },
+            "problemMatcher": []
+        }
+    ]
+}

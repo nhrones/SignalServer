@@ -1,5 +1,5 @@
 
-import { serve } from "https://deno.land/std@0.123.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.125.0/http/server.ts";
 import { gameIsFull, managePeers, callee, caller } from './peerManagement.ts'
 
 export const DEBUG = (Deno.env.get("DEBUG") === "true") || true

@@ -20,7 +20,11 @@
             ],
             "windows": {
                 "options": {
-                    "cwd": "./"
+                    "cwd": "./",
+                    "env": {
+                        "DEBUG": "true", 
+                        "DENO_REGION" : "localhost"
+                    },
                 },
                 "command": "deno",
                 "args": [

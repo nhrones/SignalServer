@@ -9,7 +9,8 @@ const Region = Deno.env.get("DENO_REGION") || 'localhost'
 const host = "localhost" //"192.168.0.171"//"127.0.0.1"
 const port = 8000
 
-serve(handleRequest, { hostname: host, port: port });
+//serve(handleRequest, { hostname: host, port: port });
+serve(handleRequest)   
 if (DEBUG) console.log(`Serving Client App from http://${host}:${port}`);
 
 /** handle each new http request */
@@ -66,7 +67,7 @@ export function connectPeer(socket: WebSocket, request: Request) {
         }
         managePeers(id, null)
         if (socket.readyState === 1) { // OPEN
-            socket.send(JSON.stringify({ topic: "SetID", data: { id: id } }))
+            socket.send(JSON.stringify(["SetID", { id: id }]))
             if (DEBUG) {
                 console.log(`peer ${id} has connected`)
                 console.log(`callee.id: ${callee.id}, caller.id: ${caller.id}`)
@@ -79,7 +80,7 @@ export function connectPeer(socket: WebSocket, request: Request) {
     socket.onclose = () => {
         if (isAlive === true) {
             if (DEBUG) { console.log(`peer ${id} has disconnected`) }
-            channel.postMessage(JSON.stringify({ topic: "RemovePlayer", data: { id: id } }))
+            channel.postMessage(JSON.stringify(["RemovePlayer", { id: id }]))
         }
         managePeers(id, { action: 'disconnected', id:id, name:"" })
     }

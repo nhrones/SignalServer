@@ -1,7 +1,5 @@
-
+import * as type from './types.ts'
 import { DEBUG } from './server.ts'
-type PeerID = string | null
-type PeerName = string | null
 
 /** 
 * If we have both a `callee` and a `caller`, the game is full.    
@@ -9,17 +7,19 @@ type PeerName = string | null
 */
 export let gameIsFull = false
 
+export const games: Map<number,type.game> = new Map()
+
 /**
 * The first peer to connect will likely be called by a second peer.    
 * We'll call her the `callee`.
 */
-export const callee = { id: <PeerID>null, name: <PeerName>null }
+export const callee: type.peer = { id: null, name: null, gameID: 0 }
 
 /** 
 * The second peer to connect will call the first.    
 * We'll call her the `caller`. 
 */
-export const caller = { id: <PeerID>null, name: <PeerName>null }
+export const caller: type.peer = { id: null, name: null, gameID: 0 }
 
 /** 
  * manage peers and game state 
@@ -29,6 +29,7 @@ export const managePeers = (thisID: string,
     // if we have new data, unpack it
     if (data !== null) {
         const { action, id, name } = data
+        
         // when a peer registers we get their name
         if (action === 'connected') {
             if (caller.id === id) { caller.name = name }

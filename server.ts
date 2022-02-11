@@ -1,5 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.125.0/http/server.ts";
+import { Message, SocketState } from './types.ts'
 import { gameIsFull, managePeers, callee, caller } from './peerManagement.ts'
 
 export const DEBUG = (Deno.env.get("DEBUG") === "true") || true
@@ -52,7 +53,7 @@ export function connectPeer(socket: WebSocket, request: Request) {
 
     // message from another socket! relay it
     channel.onmessage = (e: MessageEvent) => {
-        if (socket.readyState === 1) { // 1 = OPEN
+        if (socket.readyState === SocketState.OPEN) {
             socket.send(e.data);
         }
     }
@@ -66,9 +67,8 @@ export function connectPeer(socket: WebSocket, request: Request) {
             caller.id = id
         }
         managePeers(id, null)
-        if (socket.readyState === 1) { // OPEN
-            // 9 = SetID
-            socket.send(JSON.stringify([9, { id: id }]))
+        if (socket.readyState === SocketState.OPEN) {
+            socket.send(JSON.stringify([Message.SetID, { id: id }]))
             if (DEBUG) {
                 console.log(`peer ${id} has connected`)
                 console.log(`callee.id: ${callee.id}, caller.id: ${caller.id}`)
@@ -80,11 +80,10 @@ export function connectPeer(socket: WebSocket, request: Request) {
     // when this client closes the connection, inform all peers
     socket.onclose = () => {
         if (isAlive === true) {
-            if (DEBUG) { console.log(`peer ${id} has disconnected`) }
-            // 1 = RemovePlayer
-            channel.postMessage(JSON.stringify([1, { id: id }]))
+            if (DEBUG) console.log(`peer ${id} has disconnected`) 
+            channel.postMessage(JSON.stringify([Message.RemovePlayer, id]))
         }
-        managePeers(id, { action: 'disconnected', id:id, name:"" })
+        managePeers(id, { action: 'disconnected', id: id, name: "" })
     }
  
     // Ensure that all message are passed through and delivered, 
@@ -93,10 +92,12 @@ export function connectPeer(socket: WebSocket, request: Request) {
         if (DEBUG) console.log(event.data)
         const payload = JSON.parse(event.data)
         const topic = payload[0]
-        console.log(topic)
+        if (DEBUG) console.log('socket.onmessage - topic: ', topic)
         const data = payload[1]
+        
         if (topic === 0) { //'RegisterPlayer') {
-            managePeers(id, { action: 'connected', id: data.id, name: data.name })
+            if (DEBUG) console.info('socket.onmessage - RegisterPlayer: ', data)
+            managePeers(id, { action: 'connected', id: data[0], name: data[1] })
         }
         // Relay this message to the other peers(s) 
         channel.postMessage(event.data)

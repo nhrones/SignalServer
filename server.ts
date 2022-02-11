@@ -67,7 +67,8 @@ export function connectPeer(socket: WebSocket, request: Request) {
         }
         managePeers(id, null)
         if (socket.readyState === 1) { // OPEN
-            socket.send(JSON.stringify(["SetID", { id: id }]))
+            // 9 = SetID
+            socket.send(JSON.stringify([9, { id: id }]))
             if (DEBUG) {
                 console.log(`peer ${id} has connected`)
                 console.log(`callee.id: ${callee.id}, caller.id: ${caller.id}`)
@@ -80,7 +81,8 @@ export function connectPeer(socket: WebSocket, request: Request) {
     socket.onclose = () => {
         if (isAlive === true) {
             if (DEBUG) { console.log(`peer ${id} has disconnected`) }
-            channel.postMessage(JSON.stringify(["RemovePlayer", { id: id }]))
+            // 1 = RemovePlayer
+            channel.postMessage(JSON.stringify([1, { id: id }]))
         }
         managePeers(id, { action: 'disconnected', id:id, name:"" })
     }
@@ -89,8 +91,11 @@ export function connectPeer(socket: WebSocket, request: Request) {
     // even if the server has no idea what they are.          
     socket.onmessage = (event) => {
         if (DEBUG) console.log(event.data)
-        const { topic, data } = JSON.parse(event.data)
-        if (topic === 'RegisterPlayer') {
+        const payload = JSON.parse(event.data)
+        const topic = payload[0]
+        console.log(topic)
+        const data = payload[1]
+        if (topic === 0) { //'RegisterPlayer') {
             managePeers(id, { action: 'connected', id: data.id, name: data.name })
         }
         // Relay this message to the other peers(s) 

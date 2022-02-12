@@ -1,6 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.125.0/http/server.ts";
-import { Message, SocketState } from './types.ts'
+import { Message, SocketState, topicName } from './types.ts'
 import { gameIsFull, managePeers, callee, caller } from './peerManagement.ts'
 
 export const DEBUG = (Deno.env.get("DEBUG") === "true") || true
@@ -89,10 +89,9 @@ export function connectPeer(socket: WebSocket, request: Request) {
     // Ensure that all message are passed through and delivered, 
     // even if the server has no idea what they are.          
     socket.onmessage = (event) => {
-        if (DEBUG) console.log(event.data)
         const payload = JSON.parse(event.data)
-        const topic = payload[0]
-        if (DEBUG) console.log('socket.onmessage - topic: ', topic)
+        const topic: number = payload[0] || 0
+        if (DEBUG) console.log('socket.onmessage - topic: ', topicName.get(topic))
         const data = payload[1]
         
         if (topic === 0) { //'RegisterPlayer') {

@@ -30,8 +30,9 @@ The blue highlighted numbers indicate possible scores that are available to sele
 You may steal any other players score-item if a blue score is shown.
 Have fun!
 ```
+App code at https://github.com/nhrones/RtcDiceApp
 
-## Run Online
+## Run the app from Deploy
 https://rtc-dice-app-server.deno.dev/  
 
 ## Developed using my own custom framework (Surface)

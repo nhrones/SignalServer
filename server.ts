@@ -82,10 +82,11 @@ export function connectPeer(socket: WebSocket, request: Request) {
 
     // when ready, send the peer a unique id (its own socket-key)
     socket.onopen = () => {
-        let role = CALLEE
+        let role = 0
         thisID = request.headers.get('sec-websocket-key') || 'id'
         if (callee.id === emptyString) { // first peer 
             callee.id = thisID
+            role = CALLEE
         } else if (caller.id === emptyString) { // second peer
             caller.id = thisID
             role = CALLER
@@ -106,7 +107,7 @@ export function connectPeer(socket: WebSocket, request: Request) {
     // when this client closes the connection, inform all peers
     socket.onclose = () => {
         if (isAlive === true) {
-            if (DEBUG) console.log(`peer ${thisID} has disconnected`)
+            if (DEBUG) console.log(`Peer ${thisID} has disconnected`)
             channel.postMessage(JSON.stringify([REMOVE_PLAYER, thisID]))
         }
 

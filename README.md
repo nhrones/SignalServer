@@ -1,7 +1,7 @@
 # DenoDice
    
-## Multiplayer Poker Dice Game.
-This multi-player game leverages Deno-Deploy BroadcastChannel.
+## Two Player Poker Dice Game.
+This two-player game leverages WebRtc and Deno-Deploy BroadcastChannel.
 
 * Zero external dependencies 
    
@@ -9,19 +9,16 @@ This multi-player game leverages Deno-Deploy BroadcastChannel.
 
 * Virtual DOM-like element-objects are hydrated from HTML and css.
 
-This one-to-four player version was rewritten to use     
-Deno-Deploy's BroadcastChannel implementation.  
-
 The fun thing about the multiplayer game is that players are allowed    
 to 'steal' other players score items if they roll a greater sum for that item.    
 
 HeeHee ... snicker-sniker ...
-
-[![dice](./dice.jpg)](https://deploy-dice.deno.dev/)    
+Try it.
+https://rtc-dice-app-server.deno.dev/    
    
 Usage:
 ```
-Open one or more instances of the app. 
+Open one or two instances of the app. 
 Each instance will show a unique color icon in the tab.
 This color will match the color of the `Roll-Button` to determin whos turn it is.
 
@@ -35,7 +32,7 @@ Have fun!
 ```
 
 ## Run Online
-https://deploy-dice.deno.dev/     
+https://rtc-dice-app-server.deno.dev/  
 
 ## Developed using my own custom framework (Surface)
 ## Interesting features
@@ -61,4 +58,4 @@ https://deploy-dice.deno.dev/
     
 ### ZERO External Dependencies PURE Vanilla Typescript  
 
-[![comms](./WS-BC-comms.png)]  
+[![comms](./hookup-comms.png)]  

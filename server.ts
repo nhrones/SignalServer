@@ -100,6 +100,7 @@ export function connectPeer(socket: WebSocket, request: Request) {
             isAlive = true;
         }
         gameIsFull = (callee.id !== emptyString && caller.id !== emptyString) ? true : false
+        console.log(`Callee: ${callee.id}, Caller: ${caller.id}`)
     }
 
     // when this client closes the connection, inform all peers

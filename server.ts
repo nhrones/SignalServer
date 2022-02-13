@@ -126,6 +126,8 @@ export function connectPeer(socket: WebSocket, request: Request) {
             caller.name = emptyString;
         }
         gameIsFull = (callee.id !== emptyString && caller.id !== emptyString) ? true : false
+        console.log(`After disconnect, callee: ${callee.id}, caller: ${caller.id}`)
+
     }
 
     // Ensure that all message are passed through and delivered, 

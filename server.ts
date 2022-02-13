@@ -20,7 +20,7 @@ const emptyString = ""
 * We will reject any new connections.
 */
 let gameIsFull = false
-
+let peerCount = 0
 /**
 * The first peer to connect will likely be called by a second peer.    
 * We'll call her the `callee`.
@@ -68,7 +68,8 @@ export function connectPeer(socket: WebSocket, request: Request) {
 
     let thisID = emptyString;
     let isAlive = false;
-
+    let thisRole = 0
+    
     if (DEBUG) console.log(`connection in Region ${Region}`)
 
     const channel = new BroadcastChannel("game");
@@ -82,18 +83,18 @@ export function connectPeer(socket: WebSocket, request: Request) {
 
     // when ready, send the peer a unique id (its own socket-key)
     socket.onopen = () => {
-        let role = 0
+        peerCount++
         thisID = request.headers.get('sec-websocket-key') || 'id'
         if (callee.id === emptyString) { // first peer 
             callee.id = thisID
-            role = CALLEE
+            thisRole = CALLEE
         } else if (caller.id === emptyString) { // second peer
             caller.id = thisID
-            role = CALLER
+            thisRole = CALLER
         }
 
         if (socket.readyState === OPEN) {
-            socket.send(JSON.stringify([SET_ID, { id: thisID, role: role }]))
+            socket.send(JSON.stringify([SET_ID, { id: thisID, role: thisRole }]))
             if (DEBUG) {
                 console.log(`peer ${thisID} has connected`)
                 console.log(`callee.id: ${callee.id}, caller.id: ${caller.id}`)
@@ -106,6 +107,7 @@ export function connectPeer(socket: WebSocket, request: Request) {
 
     // when this client closes the connection, inform all peers
     socket.onclose = () => {
+        peerCount--
         if (isAlive === true) {
             if (DEBUG) console.log(`Peer ${thisID} has disconnected`)
             channel.postMessage(JSON.stringify([REMOVE_PLAYER, thisID]))
@@ -126,9 +128,12 @@ export function connectPeer(socket: WebSocket, request: Request) {
             caller.id = emptyString;
             caller.name = emptyString;
         }
+        if (peerCount <= 0) {
+            callee.id = emptyString
+            caller.id = emptyString
+        }
         gameIsFull = (callee.id !== emptyString && caller.id !== emptyString) ? true : false
         console.log(`After disconnect, callee: ${callee.id}, caller: ${caller.id}`)
-
     }
 
     // Ensure that all message are passed through and delivered, 

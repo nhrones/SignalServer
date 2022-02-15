@@ -89,6 +89,7 @@ export function connectPeer(socket: WebSocket, request: Request) {
             if (DEBUG) console.log(`Peer ${thisID} has disconnected with code: ${ev.code}`)
             channel.postMessage(JSON.stringify([REMOVE_PLAYER, thisID]))
         }
+        channel.close()
     }
 
     // Ensure that all message are passed through and delivered, 

@@ -44,8 +44,9 @@ function handleRequest(request: Request): Promise<Response> {
 }
 
 /**  
- * A callback for the Server WebSocket 'connect' event.    
- * NOTE: This signaling service does not actually need to understand     
+ * A callback for the Server WebSocket 'upgrade' event.
+ *     
+ * NOTE: Our signaling service does not actually need to understand     
  * or do anything with the data being exchanged through it.
 */
 export function connectPeer(socket: WebSocket, request: Request) {
@@ -56,32 +57,36 @@ export function connectPeer(socket: WebSocket, request: Request) {
 
     if (DEBUG) console.log(`connection in Region ${Region}`)
 
+    // Note: this closure gets its own BroadcastChannel connection
     const channel = new BroadcastChannel("game");
 
-    // message from another socket! relay it
+    // message from another peer-socket! relay it
     channel.onmessage = (e: MessageEvent) => {
-        console.info('channel.onmessage:', e.data)
+        if (DEBUG) console.info('channel.onmessage:', e.data)
         if (socket.readyState === OPEN) {
             socket.send(e.data);
         }
     }
 
-    // when ready, send the peer a unique id (its own socket-key)
+    // When ready, send this peer their own unique id,
+    // and then detect if the game is 'full' (callee + caller). 
+    // A gameIsFull flag will block unneed/unwanted socket upgrades. 
+    // The app instance will get a failed connection and report 
+    // to the user 'Game is full'. 
     socket.onopen = () => {
         peerCount++
         thisID = request.headers.get('sec-websocket-key') || 'id'
 
         if (socket.readyState === OPEN) {
             socket.send(JSON.stringify([SET_ID, { id: thisID, role: thisRole }]))
-            if (DEBUG) {
-                console.log(`peer ${thisID} has connected`)
-            }
+            if (DEBUG) console.log(`peer ${thisID} has connected`)
             isAlive = true;
         }
         gameIsFull = (peerCount >= 2)
     }
 
-    // when this client closes the connection, inform all peers
+    // When this peer has closed the socket connection, 
+    // inform all peers and close the BroadcastChannel connection.
     socket.onclose = (ev: CloseEvent) => {
         peerCount--
         gameIsFull = false
@@ -89,16 +94,26 @@ export function connectPeer(socket: WebSocket, request: Request) {
             if (DEBUG) console.log(`Peer ${thisID} has disconnected with code: ${ev.code}`)
             channel.postMessage(JSON.stringify([REMOVE_PLAYER, thisID]))
         }
+        // No leaks -- closing this should allow this closure to be GC'd
         channel.close()
     }
 
-    // Ensure that all message are passed through and delivered, 
-    // even if the server has no idea what they are.          
-    socket.onmessage = (event) => {
-        const payload = JSON.parse(event.data)
+    // We ensure that all signalling messages are passed through 
+    // and delivered, even if the server has no idea what they are.          
+    socket.onmessage = (msg) => {
+        const payload = JSON.parse(msg.data)
         const topic: number = payload[0] || 0
         if (DEBUG) console.log('socket.onmessage - topic: ', topic)
-        // Relay this message to the other peers(s) 
-        channel.postMessage(event.data)
+        // Relay this message to all other peers(s) 
+        channel.postMessage(msg.data)
+    }
+
+    // Report any errors
+    socket.onerror = (ev: Event | ErrorEvent) => {
+        if (ev instanceof ErrorEvent) {
+            console.error('An error occurred:', ev.message);
+        } else {
+            console.error('socket error: code', ev.type);
+        }
     }
 }

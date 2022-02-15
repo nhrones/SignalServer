@@ -1,6 +1,5 @@
 
 import { serve } from "https://deno.land/std@0.125.0/http/server.ts";
-import { topicName } from './topicNames.ts'
 
 export const DEBUG = (Deno.env.get("DEBUG") === "true") || false
 const Region = Deno.env.get("DENO_REGION") || 'localhost'
@@ -8,35 +7,20 @@ const Region = Deno.env.get("DENO_REGION") || 'localhost'
 const REMOVE_PLAYER = 1
 const SET_ID = 9
 const OPEN = 1
-const CALLEE = 1
-const CALLER = 2
-
-const RegisterPlayer = 0
-
-const emptyString = ""
 
 /** 
-* If we have both a `callee` and a `caller`, the game is full.    
+* If we have both a `callee` and a `caller`( peercount >= 2), the game is full.    
 * We will reject any new connections.
 */
 let gameIsFull = false
 let peerCount = 0
-/**
-* The first peer to connect will likely be called by a second peer.    
-* We'll call her the `callee`.
-*/
-export const callee = { id: emptyString, name: 'Player1' }
-
-/** 
-* The second peer to connect will call the first.    
-* We'll call her the `caller`. 
-*/
-export const caller = { id: emptyString, name: 'Player2' }
 
 serve(handleRequest)
 if (DEBUG) console.log(`Serving Websockets`);
 
-/** handle each new http request */
+/** 
+ * handle each new http request 
+ */
 function handleRequest(request: Request): Promise<Response> {
     try {
         if (request.headers.get("upgrade") === "websocket") {
@@ -66,16 +50,17 @@ function handleRequest(request: Request): Promise<Response> {
 */
 export function connectPeer(socket: WebSocket, request: Request) {
 
-    let thisID = emptyString;
+    let thisID = '';
     let isAlive = false;
-    let thisRole = 0
-    
+    const thisRole = peerCount + 1
+
     if (DEBUG) console.log(`connection in Region ${Region}`)
 
     const channel = new BroadcastChannel("game");
 
     // message from another socket! relay it
     channel.onmessage = (e: MessageEvent) => {
+        console.info('channel.onmessage:', e.data)
         if (socket.readyState === OPEN) {
             socket.send(e.data);
         }
@@ -85,55 +70,25 @@ export function connectPeer(socket: WebSocket, request: Request) {
     socket.onopen = () => {
         peerCount++
         thisID = request.headers.get('sec-websocket-key') || 'id'
-        if (callee.id === emptyString) { // first peer 
-            callee.id = thisID
-            thisRole = CALLEE
-        } else if (caller.id === emptyString) { // second peer
-            caller.id = thisID
-            thisRole = CALLER
-        }
 
         if (socket.readyState === OPEN) {
             socket.send(JSON.stringify([SET_ID, { id: thisID, role: thisRole }]))
             if (DEBUG) {
                 console.log(`peer ${thisID} has connected`)
-                console.log(`callee.id: ${callee.id}, caller.id: ${caller.id}`)
             }
             isAlive = true;
         }
-        gameIsFull = (callee.id !== emptyString && caller.id !== emptyString) ? true : false
-        console.log(`Callee: ${callee.id}, Caller: ${caller.id}`)
+        gameIsFull = (peerCount >= 2)
     }
 
     // when this client closes the connection, inform all peers
-    socket.onclose = () => {
+    socket.onclose = (ev: CloseEvent) => {
         peerCount--
+        gameIsFull = false
         if (isAlive === true) {
-            if (DEBUG) console.log(`Peer ${thisID} has disconnected`)
+            if (DEBUG) console.log(`Peer ${thisID} has disconnected with code: ${ev.code}`)
             channel.postMessage(JSON.stringify([REMOVE_PLAYER, thisID]))
         }
-
-        // if our `callee` disconnected, swap roles;  
-        // the caller will now become a callee
-        if (thisID === callee.id) {
-            if (caller.id !== emptyString) {
-                callee.id = caller.id;
-                callee.name = caller.name;
-                caller.id = emptyString;
-                caller.name = emptyString;
-            }            
-        } 
-        // the caller quit, we'll wait for another
-        else if (thisID === caller.id) {
-            caller.id = emptyString;
-            caller.name = emptyString;
-        }
-        if (peerCount <= 0) {
-            callee.id = emptyString
-            caller.id = emptyString
-        }
-        gameIsFull = (callee.id !== emptyString && caller.id !== emptyString) ? true : false
-        console.log(`After disconnect, callee: ${callee.id}, caller: ${caller.id}`)
     }
 
     // Ensure that all message are passed through and delivered, 
@@ -141,14 +96,7 @@ export function connectPeer(socket: WebSocket, request: Request) {
     socket.onmessage = (event) => {
         const payload = JSON.parse(event.data)
         const topic: number = payload[0] || 0
-        if (DEBUG) console.log('socket.onmessage - topic: ', topicName.get(topic))
-        const data = payload[1]
-
-        if (topic === RegisterPlayer) {
-            if (DEBUG) console.info('socket.onmessage - RegisterPlayer: ', data)
-            if (caller.id === data[0]) { caller.name = data[1] }
-            if (callee.id === data[0]) { callee.name = data[1] }
-        }
+        if (DEBUG) console.log('socket.onmessage - topic: ', topic)
         // Relay this message to the other peers(s) 
         channel.postMessage(event.data)
     }

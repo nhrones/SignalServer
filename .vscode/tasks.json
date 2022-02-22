@@ -23,6 +23,7 @@
                     "cwd": "./",
                     "env": {
                         "DEBUG": "true", 
+                        "MAX_CONNECTS": "2", 
                         "DENO_REGION" : "localhost"
                     },
                 },

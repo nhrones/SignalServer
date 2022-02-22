@@ -5,7 +5,7 @@ const SET_ID = 9
 const REMOVE_PLAYER = 1
 
 /**   
- *  A signalling class for WebSocket - BroadcastChannel 'message-coupling'.    
+ *  A signaling class for WebSocket - BroadcastChannel 'message-coupling'.    
  *  @example
  *   >-WS.send ---------> BC.onmessage--v    
  *   |                                  |     
@@ -72,7 +72,7 @@ export class SignalConnection {
         }
 
         //
-        //  Ensure that all signalling messages are passed through. 
+        //  Ensure that all signaling messages are passed through. 
         //           
         this.socket.onmessage = (msg) => {
             if (DEBUG) console.log(`Seat#${this.seat} recieved socket message >> ${msg.data}`)

@@ -1,5 +1,5 @@
 
-import { serve } from "https://deno.land/std@0.125.0/http/server.ts";
+import { serve, ConnInfo } from "https://deno.land/std@0.125.0/http/server.ts";
 import { SignalConnection } from './signaler.ts'
 export const DEBUG = (Deno.env.get("DEBUG") === "true") || false
 const MAX_CONNECTS = parseInt(Deno.env.get("MAX_CONNECTS") || '2')
@@ -24,8 +24,9 @@ if (DEBUG) console.log(`Serving Websockets`);
  * handle each new http request 
  * 
  */
-function handleRequest(request: Request): Promise<Response> {
+function handleRequest(request: Request, connInfo: ConnInfo): Promise<Response> {
     try {
+        console.info('request from;', connInfo.remoteAddr as Deno.NetAddr)
         if (request.headers.get("upgrade") === "websocket") {
             if (connections.size < MAX_CONNECTS) {
                 const { socket, response } = Deno.upgradeWebSocket(request);

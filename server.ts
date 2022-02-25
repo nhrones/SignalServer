@@ -1,5 +1,5 @@
 
-import { serve, ConnInfo } from "https://deno.land/std@0.125.0/http/server.ts";
+import { serve, ConnInfo } from "https://deno.land/std@0.127.0/http/server.ts";
 import { SignalConnection } from './signaler.ts'
 export const DEBUG = (Deno.env.get("DEBUG") === "true") || false
 const MAX_CONNECTS = parseInt(Deno.env.get("MAX_CONNECTS") || '2')

@@ -1,48 +1,26 @@
 
-import { serve, ConnInfo } from "https://deno.land/std@0.127.0/http/server.ts";
-import { SignalConnection } from './signaler.ts'
-export const DEBUG = (Deno.env.get("DEBUG") === "true") || false
-const MAX_CONNECTS = parseInt(Deno.env.get("MAX_CONNECTS") || '2')
-/**
- * 
- *  A collection of SignalConnection instances
- * 
- */
-export const connections: Set<SignalConnection> = new Set()
+import { serve } from "https://deno.land/std@0.129.0/http/server.ts";
+import { DEBUG, host, port, corsResponse, connections } from './context.ts'
+import { SignalConnection } from './connection.ts'
 
-/*
- *
- * Serves HTTP requests with the given handler
- *
- */
-serve(handleRequest)
-
-if (DEBUG) console.log(`Serving Websockets`);
-
-/** 
- * 
- * handle each new http request 
- * 
- */
-function handleRequest(request: Request, connInfo: ConnInfo): Promise<Response> {
-    try {
-        console.info('request from;', connInfo.remoteAddr as Deno.NetAddr)
-        if (request.headers.get("upgrade") === "websocket") {
-            if (connections.size < MAX_CONNECTS) {
-                const { socket, response } = Deno.upgradeWebSocket(request);
-                connections.add(new SignalConnection(socket, request))
-                return Promise.resolve(response);
-            } else {
-                return Promise.resolve(new Response('Game full!', { status: 500 }))
-            }
-        }
-        const errMsg = `Error: Request was not a valid WebSocket request! (405)`
-        console.error(errMsg)
-        return Promise.resolve(new Response(errMsg, { status: 405 }))
-    } catch (err: unknown) {
-        const errMsg = `Internal server error! 
-    ${JSON.stringify(err)}`
-        console.error(errMsg)
-        return Promise.resolve(new Response(errMsg, { status: 500 }))
+/**  handle http requests */
+async function handleRequest(request: Request): Promise<Response> {
+    const { pathname } = new URL(request.url);
+    if (pathname.includes('/listen')) { // client requesting SSE connection
+        const id = pathname.substring(pathname.lastIndexOf('/') + 1)
+        const connection = new SignalConnection(id)
+        connections.set(id, connection);
+        return connection.connect()
     }
+    else if (request.method === 'POST') { // client posts a message
+        const dataObject = await request.json();
+        if (DEBUG) console.info('Client Posted:', dataObject)
+        const gBC = new BroadcastChannel("game");
+        gBC.postMessage(dataObject);
+        gBC.close();
+        return corsResponse()
+    } else  return corsResponse()
 }
+
+serve(handleRequest, { hostname: host, port: port });
+console.log(`Serving http://${host}:${port}`);

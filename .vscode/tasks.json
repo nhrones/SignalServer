@@ -4,28 +4,28 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Deno Run Socket Server",
+            "label": "Deno Run SSEServer",
             "type": "shell",
             "command": "deno",
             "options": {
-                "cwd": "./"
+                "cwd": "./",
+                "env": {
+                    "DEBUG": "true", 
+                    "DENO_REGION" : "localhost"
+                },
             },
             "args": [
                 "run",
                 "--watch",
                 "--unstable",
                 "--allow-env", 
+                "--allow-read",
                 "--allow-net", 
                 "${workspaceFolder}/server.ts"
             ],
             "windows": {
                 "options": {
-                    "cwd": "./",
-                    "env": {
-                        "DEBUG": "true", 
-                        "MAX_CONNECTS": "2", 
-                        "DENO_REGION" : "localhost"
-                    },
+                    "cwd": "./"
                 },
                 "command": "deno",
                 "args": [
@@ -33,14 +33,12 @@
                     "--watch",
                     "--unstable",
                     "--allow-env",
+                    "--allow-read",
                     "--allow-net",  
                     "${workspaceFolder}\\server.ts"
                 ]
             },
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
+            "group": "none",
             "presentation": {
                 "reveal": "always",
                 "focus": true,

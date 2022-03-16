@@ -12,7 +12,7 @@ export class SignalConnection {
     stream: ReadableStream | null
  
     constructor(id: string) {
-        //TODO SignalConnection.connections++
+        SignalConnection.connections++
         this.id = id;
         this.stream = null
     }
@@ -99,6 +99,7 @@ export class SignalConnection {
                 console.log('User was disconnected!')
                 // cancel is called when the client hangs up the connection.
                 sseChannel.close();
+                SignalConnection.connections--
             },
 
         });

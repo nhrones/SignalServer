@@ -12,7 +12,7 @@ export class SignalConnection {
     stream: ReadableStream | null
  
     constructor(id: string) {
-        SignalConnection.connections++
+        //SignalConnection.connections++
         this.id = id;
         this.stream = null
     }

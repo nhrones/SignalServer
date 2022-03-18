@@ -1,11 +1,14 @@
 
 import { serve } from "https://deno.land/std@0.129.0/http/server.ts";
-import { DEBUG, host, port, corsResponse, connections } from './context.ts'
+import { host, port, corsResponse, connections } from './context.ts'
 import { SignalConnection } from './connection.ts'
+//HACK 
+const DEBUG =true
 
 /**  handle http requests */
 async function handleRequest(request: Request): Promise<Response> {
     const { pathname } = new URL(request.url);
+    console.log('serving: ',pathname)
     if (pathname.includes('/listen')) { // client requesting SSE connection
         const id = pathname.substring(pathname.lastIndexOf('/') + 1)
         const connection = new SignalConnection(id)
@@ -21,6 +24,6 @@ async function handleRequest(request: Request): Promise<Response> {
         return corsResponse()
     } else  return corsResponse()
 }
-
+ 
 serve(handleRequest, { hostname: host, port: port });
 console.log(`Serving http://${host}:${port}`);

@@ -10,17 +10,24 @@ export class SignalConnection {
     id = ''
 
     stream: ReadableStream | null
- 
+
     constructor(id: string) {
-        //SignalConnection.connections++
         this.id = id;
         this.stream = null
     }
- 
+
     connect(): Response {
 
+  
+        // notify the game is full
+        if (SignalConnection.connections >= 2) {
+            if (DEBUG) console.log('User ' + this.id + ' tryed to connected! connections: ' + SignalConnection.connections)
+            return new Response("", { status: 404 })
+        }
         const sseChannel = new BroadcastChannel("game");
-        if (DEBUG) console.log('Started ' + this.id + ' SSE Stream!')
+        SignalConnection.connections++
+        if (DEBUG) console.log('User ' + this.id + ' connected! connections: ' + SignalConnection.connections)
+
 
         this.stream = new ReadableStream({
 
@@ -30,65 +37,36 @@ export class SignalConnection {
              * as the name suggests, allows you to control the stream. 
              */
             start: (controller) => {
-                
-                // notify the game is full
-                if (SignalConnection.connections >= 4) {
-                    controller.enqueue('event: GameIsFull\n\n')
-                    controller.close()
-                }
-                
+
+
                 // send the client their new ID
                 const setID = JSON.stringify({ data: { id: this.id } })
                 controller.enqueue('event: SetID\ndata: ' + setID + '\nretry: 300000\n\n')
-                
+
                 sseChannel.onmessage = (e) => {
 
                     // BC messages are posted as 'Objects'
                     const dataObject = e.data
                     const { from } = dataObject
+                    const event = ('event' in dataObject === true) ? dataObject.event : null
+                    if (event) {
+                        // disconnect the stream
+                        if (event === 'close' && from === this.id) {
+                            sseChannel.close()
+                            this.stream = null
+                            SignalConnection.disconnect('recieved a <close> event ' + dataObject.data)
+                            return new Response("", { status: 404 })
+                        } else if (from !== this.id) {
+                            controller.enqueue('event: ' + dataObject.event + '\n' +
+                                'data: ' + JSON.stringify(dataObject) + '\n\n');
+                        }
+                    }
 
                     // We don't send messages to our self!
                     if (from !== this.id) {
-                        console.info('SSE sending: ', dataObject)
+                        if (DEBUG) console.info('SSE sending: ', dataObject)
                         controller.enqueue('data: ' + JSON.stringify(dataObject) + '\n\n');
-                    } else {
-                        console.log("Ignore! It's from me!")
                     }
-
-                    /**
-                     * Disconnection Detection 
-                     * When a client is connected to the server via SSE, the server 
-                     * is not notified if the client disconnects. Disconnection will 
-                     * be detected by the server only when trying to send data to
-                     * the client and getting an error report mentioning that the 
-                     * connection was lost. 
-                     * The disconnection detection issue can be addressed with a
-                     * server sent heartbeat.
-                     * 
-                     * To cancel a stream from the server, respond with a 
-                     * non "text/event-stream" Content-Type or return an HTTP status other 
-                     * than 200 OK (e.g. 404 Not Found).
-                     * Both methods will prevent the browser from re-establishing the connection.
-                     * 
-                     */
-                    // if (data.data === 'bye') {
-                    //     console.log('Bye Bye!')
-                    //     try {
-                    //         if (this.stream && !this.stream.locked) {
-                    //             console.info('Stream was not locked while trying to cancel!')
-                    //             //const c = stream.cancel('Client said Bye!')
-                    //             //    c.then((value)=> console.log(value))
-                    //             controller.error('Client said Bye!')
-                    //         } else {
-                    //             console.log("The stream is locked! Can't cancel!")
-                    //         }
-                    //     } catch (er) {
-                    //         console.error('I caught this error trying to cancel the stream!', er)
-                    //     } finally {
-                    //         console.log("Well didn't catch it! Why not?")
-                    //     }
-
-                    // }
                 };
             },
 
@@ -96,10 +74,9 @@ export class SignalConnection {
              * Called when the stream consumer cancels the stream. 
              */
             cancel() {
-                console.log('User was disconnected!')
-                // cancel is called when the client hangs up the connection.
+                if (DEBUG) console.log('User was disconnected! connections: ', SignalConnection.connections)
+                SignalConnection.disconnect('User disconnected!')
                 sseChannel.close();
-                SignalConnection.connections--
             },
 
         });
@@ -123,5 +100,10 @@ export class SignalConnection {
             },
         });
 
+    }
+    static disconnect(reason: string) {
+        SignalConnection.connections--
+        if (DEBUG) console.log('Disconnected! reason:', reason)
+        if (DEBUG) console.log('connection count = ', SignalConnection.connections)
     }
 }

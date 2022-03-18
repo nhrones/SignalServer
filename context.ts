@@ -1,7 +1,7 @@
 import { SignalConnection } from './connection.ts'
 
 // constants from environment variables
-export const DEBUG = (Deno.env.get("DEBUG") === "true") || false
+export const DEBUG = (Deno.env.get("DEBUG") === "true") || true
 export const Region = Deno.env.get("DENO_REGION") || 'localhost'
 
 export const myIP = '192.168.0.171'

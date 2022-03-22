@@ -10,7 +10,7 @@
             "options": {
                 "cwd": "./",
                 "env": {
-                    "DEBUG": "true", 
+                    "DEBUG": "false", 
                     "DENO_REGION" : "localhost"
                 },
             },

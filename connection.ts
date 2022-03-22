@@ -26,7 +26,7 @@ export class SignalConnection {
         }
         const sseChannel = new BroadcastChannel("game");
         SignalConnection.connections++
-        if (DEBUG) console.log('User ' + this.id + ' connected! connections: ' + SignalConnection.connections)
+        console.log('User ' + this.id + ' connected! connections: ' + SignalConnection.connections)
 
 
         this.stream = new ReadableStream({
@@ -48,6 +48,7 @@ export class SignalConnection {
                     // BC messages are posted as 'Objects'
                     const dataObject = e.data
                     const { from } = dataObject
+ 
                     const event = ('event' in dataObject === true) ? dataObject.event : null
                     if (event) {
                         // disconnect the stream
@@ -61,7 +62,6 @@ export class SignalConnection {
                                 'data: ' + JSON.stringify(dataObject) + '\n\n');
                         }
                     }
-
                     // We don't send messages to our self!
                     if (from !== this.id) {
                         if (DEBUG) console.info('SSE sending: ', dataObject)
@@ -103,7 +103,7 @@ export class SignalConnection {
     }
     static disconnect(reason: string) {
         SignalConnection.connections--
-        if (DEBUG) console.log('Disconnected! reason:', reason)
-        if (DEBUG) console.log('connection count = ', SignalConnection.connections)
+        console.log('Disconnected! reason:', reason)
+        console.log('connection count = ', SignalConnection.connections)
     }
 }

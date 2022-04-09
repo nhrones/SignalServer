@@ -1,5 +1,5 @@
 
-import { serve } from "https://deno.land/std@0.129.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.133.0/http/server.ts";
 import { DEBUG, host, port, corsResponse, connections } from './context.ts'
 import { SignalConnection } from './connection.ts'
 

@@ -20,8 +20,8 @@ export class SignalConnection {
 
   
         // notify the game is full
-        if (SignalConnection.connections >= 2) {
-            if (DEBUG) console.log('User ' + this.id + ' tryed to connected! connections: ' + SignalConnection.connections)
+        if (SignalConnection.connections >= 12) {
+            if (DEBUG) console.log('User ' + this.id + ' tried to connect! connections: ' + SignalConnection.connections)
             return new Response("", { status: 404 })
         }
         const sseChannel = new BroadcastChannel("game");

@@ -1,9 +1,7 @@
 
 import { DEBUG } from './context.ts'
 
-/** 
- * A Server Sent Events stream connection class
- * */
+/** A Server Sent Events stream connection class */
 export class SignalConnection {
 
     static connections = 0
@@ -31,11 +29,9 @@ export class SignalConnection {
 
         this.stream = new ReadableStream({
 
-            /**
-             * Start: is called immediately when the object is constructed.
-             * Each readable stream has an associated controller that, 
-             * as the name suggests, allows you to control the stream. 
-             */
+            /** Start: is called immediately when the object is constructed.
+             *  Each readable stream has an associated controller that, 
+             *  as the name suggests, allows you to control the stream. */
             start: (controller) => {
 
 
@@ -70,9 +66,7 @@ export class SignalConnection {
                 };
             },
 
-            /**
-             * Called when the stream consumer cancels the stream. 
-             */
+            /** Called when the stream consumer cancels the stream. */
             cancel() {
                 if (DEBUG) console.log('User was disconnected! connections: ', SignalConnection.connections)
                 SignalConnection.disconnect('User disconnected!')
